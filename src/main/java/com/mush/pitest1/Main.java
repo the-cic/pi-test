@@ -12,6 +12,8 @@ package com.mush.pitest1;
 public class Main implements Runnable {
 
     TextScreenBuffer buffer;
+    private double fi = 0;
+    private double avgFps = 0;
 
     public Main() {
         buffer = new TextScreenBuffer();
@@ -39,10 +41,13 @@ public class Main implements Runnable {
     }
 
     private void drawBg() {
-        buffer.clear('.', TextScreenBuffer.BLUE, TextScreenBuffer.BLUE);
-
         drawSmiley(0, 0);
-        drawSmiley(40, 10);
+        
+        fi += 0.01;
+        int dx = (int) (Math.cos(fi) * 10);
+        int dy = (int) (Math.sin(fi) * 10);
+        drawSmiley(40 + dx, 10 + dy);
+        
         drawSmiley(50, 30);
         drawSmiley(70, 5);
         drawSmiley(90, 20);
@@ -60,7 +65,7 @@ public class Main implements Runnable {
     @Override
     public void run() {
         boolean loop = true;
-        long targetFps = 15;
+        long targetFps = 12;
         long targetMillisPerFrame = 1000 / targetFps;
 
         int x = 0;
@@ -68,17 +73,25 @@ public class Main implements Runnable {
         int dx = 1;
         int dy = 1;
         int count = 0;
+        
+        buffer.setDirtyFramesUntilFullFrame((int) (targetFps * 15));
+        long lastTime = System.currentTimeMillis();
 
         while (loop) {
-            long prevTime = System.currentTimeMillis();
+            long time0 = System.currentTimeMillis();
+
+            buffer.clear('.', TextScreenBuffer.BLUE, TextScreenBuffer.BLUE);
 
             drawBg();
+            
+            boolean hit = false;
 
             char c = buffer.getCharacter(x + dx, y + dy);
             if (c == '.') {
                 x += dx;
                 y += dy;
             } else {
+                hit = true;
                 char cx = buffer.getCharacter(x - dx, y + dy);
                 char cy = buffer.getCharacter(x + dx, y - dy);
                 if (cx == '.') {
@@ -91,12 +104,14 @@ public class Main implements Runnable {
                 }
             }
 
-            buffer.write(x, y, ":)", TextScreenBuffer.GREEN, (byte) -1);
+            buffer.write(x, y, ":)", hit ? TextScreenBuffer.RED : TextScreenBuffer.GREEN, (byte) -1);
 
             System.out.print(buffer.output());
 
             long time = System.currentTimeMillis();
-            long delay = time - prevTime;
+            long delay = time - time0;
+            long frameDelay = time - lastTime;
+            lastTime = time;
             if (delay < 0) {
                 delay = 0;
             }
@@ -105,14 +120,19 @@ public class Main implements Runnable {
             if (wait < 0) {
                 wait = 0;
             }
-            long fps = 1000 / (delay + wait);
+//            long fps = 1000 / (delay + wait);
+            if (frameDelay == 0) {
+                frameDelay = 1;
+            }
+            long fps = 1000 / (frameDelay);
+            avgFps = avgFps * 0.9 + fps * 0.1;
 
-            System.out.println("\nFps: " + fps + "      ");
+            System.out.println("\nFps: " + Math.round(avgFps) + "      ");
             System.out.println("x: " + x + " y:" + y + "              ");
             System.out.println("dx: " + dx + " dy:" + dy + "      ");
-            System.out.println("count: " + count + "      ");
-            System.out.println("delay: " + delay + "      ");
-            System.out.println("wait: " + wait + "      ");
+            System.out.println("Frame count: " + count + "      ");
+            System.out.println("Delay: " + delay + " ms      ");
+            System.out.println("Wait: " + wait + " ms      ");
 
             try {
                 Thread.sleep(wait);

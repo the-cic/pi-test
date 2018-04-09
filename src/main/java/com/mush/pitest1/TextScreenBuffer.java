@@ -22,13 +22,21 @@ public class TextScreenBuffer {
 
     private final char ESC = '\033';
 
+    // Active drawing maps
     private char[] characters;
     private byte[] fgColors;
     private byte[] bgColors;
-    private boolean[] dirty;
-    private int dirtyCount;
+
+    // Previous output content
+    private char[] charactersBuffer;
+    private byte[] fgColorsBuffer;
+    private byte[] bgColorsBuffer;
+
     private int width;
     private int height;
+    private int length;
+    private int fullFrameCountdown;
+    private int dirtyFramesUntilFullFrame = 100;
 
     public TextScreenBuffer() {
         init(5, 5);
@@ -37,17 +45,23 @@ public class TextScreenBuffer {
     public void init(int w, int h) {
         width = w;
         height = h;
-        characters = new char[getWidth() * getHeight()];
-        fgColors = new byte[getWidth() * getHeight()];
-        bgColors = new byte[getWidth() * getHeight()];
-        dirty = new boolean[getWidth() * getHeight()];
+        length = w * h;
+        characters = new char[length];
+        fgColors = new byte[length];
+        bgColors = new byte[length];
+        charactersBuffer = new char[length];
+        fgColorsBuffer = new byte[length];
+        bgColorsBuffer = new byte[length];
         clear(' ', WHITE, BLACK);
+        fullFrameCountdown = dirtyFramesUntilFullFrame;
+    }
+    
+    public void setDirtyFramesUntilFullFrame(int v) {
+        dirtyFramesUntilFullFrame = v;
     }
 
     public void clear(char fillC, byte fgCol, byte bgCol) {
-        dirtyCount = 0;
-        for (int i = 0; i < this.characters.length; i++) {
-            this.dirty[i] = false;
+        for (int i = 0; i < length; i++) {
             setCharacter(i, fillC);
             setFgColor(i, fgCol);
             setBgColor(i, bgCol);
@@ -63,26 +77,24 @@ public class TextScreenBuffer {
 
         outputResetColor(sb);
 
-        double dirtyPercent = (double) (dirtyCount) / dirty.length;
-
-        if (dirtyPercent > 0.5) {
+        if (fullFrameCountdown <= 0) {
             outputWholeBuffer(sb);
+            fullFrameCountdown = dirtyFramesUntilFullFrame;
         } else {
             outputDirtyBuffer(sb);
+            fullFrameCountdown--;
         }
 
-        sb.append("\ndirty: ").append(dirtyPercent).append(" ").append(dirtyCount).append("       ");
-
-        clearDirty();
+        copyToBuffers();
 
         return sb.toString();
     }
 
-    public void outputWholeBuffer(StringBuilder sb) {
+    private void outputWholeBuffer(StringBuilder sb) {
         byte prevFg = -1;
         byte prevBg = -1;
         for (int line = 0; line < height; line++) {
-            placeCursor(0, line, sb);
+            outputPlaceCursor(0, line, sb);
             for (int x = 0; x < width; x++) {
                 int index = getValidIndex(x, line);
                 byte fg = this.fgColors[index];
@@ -98,11 +110,11 @@ public class TextScreenBuffer {
             }
         }
         outputResetColor(sb);
-        placeCursor(0, height, sb);
-        sb.append("\nfull               ");
+        outputPlaceCursor(0, height, sb);
+        sb.append("\nFull frame              ");
     }
 
-    public void outputDirtyBuffer(StringBuilder sb) {
+    private void outputDirtyBuffer(StringBuilder sb) {
         byte prevFg = -1;
         byte prevBg = -1;
         int segments = 0;
@@ -110,9 +122,9 @@ public class TextScreenBuffer {
             boolean wasDirty = false;
             for (int x = 0; x < width; x++) {
                 int index = getValidIndex(x, line);
-                if (dirty[index]) {
+                if (isDirty(index)) {
                     if (!wasDirty) {
-                        placeCursor(x, line, sb);
+                        outputPlaceCursor(x, line, sb);
                         segments++;
                     }
                     // output
@@ -135,8 +147,14 @@ public class TextScreenBuffer {
             }
         }
         outputResetColor(sb);
-        placeCursor(0, height, sb);
-        sb.append("\nsegments: ").append(segments).append("      ");
+        outputPlaceCursor(0, height, sb);
+        sb.append("\nSegments: ").append(segments).append("      ");
+    }
+
+    private void copyToBuffers() {
+        System.arraycopy(characters, 0, charactersBuffer, 0, length);
+        System.arraycopy(fgColors, 0, fgColorsBuffer, 0, length);
+        System.arraycopy(bgColors, 0, bgColorsBuffer, 0, length);
     }
 
     private void outputResetColor(StringBuilder sb) {
@@ -157,7 +175,7 @@ public class TextScreenBuffer {
         sb.append('m');
     }
 
-    private void placeCursor(int x, int y, StringBuilder sb) {
+    private void outputPlaceCursor(int x, int y, StringBuilder sb) {
         sb.append(ESC).append('[').append(y + 1).append(';').append(x + 1).append('H');
     }
 
@@ -176,82 +194,65 @@ public class TextScreenBuffer {
 
     public void setCharacter(int x, int y, char c) {
         int index = getIndex(x, y);
-        if (index >= 0 && index < characters.length) {
+        if (index >= 0 && index < length) {
             setCharacter(index, c);
         }
     }
 
     private void setCharacter(int index, char c) {
-        if (characters[index] != c) {
-            setDirty(index);
-        }
         characters[index] = c;
     }
 
     public void setFgColor(int x, int y, byte fg) {
         int index = getIndex(x, y);
-        if (index >= 0 && index < fgColors.length) {
+        if (index >= 0 && index < length) {
             setFgColor(index, fg);
         }
     }
 
     private void setFgColor(int index, byte fg) {
-        if (fgColors[index] != fg) {
-            setDirty(index);
-        }
         fgColors[index] = fg;
     }
 
     public void setBgColor(int x, int y, byte bg) {
         int index = getIndex(x, y);
-        if (index >= 0 && index < bgColors.length) {
+        if (index >= 0 && index < length) {
             setBgColor(index, bg);
         }
     }
 
     public void setBgColor(int index, byte bg) {
-        if (bgColors[index] != bg) {
-            setDirty(index);
-        }
         bgColors[index] = bg;
     }
 
-    private void setDirty(int index) {
-        if (!dirty[index]) {
-            dirty[index] = true;
-            dirtyCount++;
-        }
-    }
-
-    private void clearDirty() {
-        for (int i = 0; i < dirty.length; i++) {
-            dirty[i] = false;
-        }
-        dirtyCount = 0;
+    private boolean isDirty(int index) {
+        return characters[index] != charactersBuffer[index]
+                || fgColors[index] != fgColorsBuffer[index]
+                || bgColors[index] != bgColorsBuffer[index];
     }
 
     public char getCharacter(int x, int y) {
         int index = getIndex(x, y);
-        if (index < 0 || index >= characters.length) {
+        if (index < 0 || index >= length) {
             return ' ';
         }
-        return characters[getIndex(x, y)];
+        return charactersBuffer[index];
     }
 
     public byte getFgColor(int x, int y) {
         int index = getIndex(x, y);
-        if (index < 0 || index >= fgColors.length) {
-            return 0;
+        if (index < 0 || index >= length) {
+            return 0; //?
         }
-        return fgColors[index];
+        return fgColorsBuffer[index];
     }
 
     public byte getBgColor(int x, int y) {
         int index = getIndex(x, y);
-        if (index < 0 || index >= bgColors.length) {
-            return 0;
+        if (index < 0 || index >= length) {
+            return 0; //?
         }
-        return bgColors[index];
+        return bgColorsBuffer[index];
     }
 
     private int getIndex(int x, int y) {
@@ -265,16 +266,10 @@ public class TextScreenBuffer {
         return y * getWidth() + x;
     }
 
-    /**
-     * @return the width
-     */
     public int getWidth() {
         return width;
     }
 
-    /**
-     * @return the height
-     */
     public int getHeight() {
         return height;
     }
