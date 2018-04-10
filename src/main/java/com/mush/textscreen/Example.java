@@ -11,7 +11,9 @@ package com.mush.textscreen;
  */
 public class Example implements Runnable {
 
-    TextScreenBuffer buffer;
+    private TextScreenBuffer buffer;
+    private TextDraw draw;
+    private TextSprite sprite;
     private double fi = 0;
     private double avgFps = 0;
 
@@ -19,20 +21,17 @@ public class Example implements Runnable {
         buffer = new TextScreenBuffer();
         buffer.init(160, 45);
 
-        System.out.print(buffer.outputClearScreen());
-    }
+        draw = new TextDraw(buffer);
 
-    private void drawLine(int x, int y, int dx, int dy, char c, byte fgCol) {
-        int steps = (int) Math.sqrt(dx * dx + dy * dy);
-        for (int i = 0; i < steps; i++) {
-            double f = (double) i / steps;
-            int u = (int) (x + dx * f);
-            int v = (int) (y + dy * f);
-            if (fgCol >= 0) {
-                buffer.setFgColor(u, v, fgCol);
-            }
-            buffer.setCharacter(u, v, c);
-        }
+        sprite = new TextSprite(5, 5)
+                .setLine("+-.-+", "MMYMM", TextColor.YELLOW)
+                .setLine("|---|", "MGGGM")
+                .setLine(" :-) ", TextColor.GREEN)
+                .setLine("|---|", "mgggm")
+                .setLine("+- -+", "MMMMMM", "Y   Y");
+        sprite.setOffset(2, 2);
+
+        System.out.print(buffer.outputClearScreen());
     }
 
     private void drawBg() {
@@ -46,15 +45,18 @@ public class Example implements Runnable {
         drawSmiley(50, 30);
         drawSmiley(70, 5);
         drawSmiley(90, 20);
+
+        sprite.draw(50, 10, buffer);
+        sprite.draw(90, 20, buffer);
     }
 
     private void drawSmiley(int x, int y) {
-        drawLine(x + 6, y + 7, 8, 0, 'O', TextScreenBuffer.WHITE);
-        drawLine(x + 4, y + 5, 2, 2, 'O', TextScreenBuffer.WHITE);
-        drawLine(x + 15, y + 5, -2, 2, 'O', TextScreenBuffer.WHITE);
+        draw.line(x + 6, y + 7, 8, 0, 'O', TextColor.WHITE);
+        draw.line(x + 4, y + 5, 2, 2, 'O', TextColor.WHITE);
+        draw.line(x + 15, y + 5, -2, 2, 'O', TextColor.WHITE);
 
-        drawLine(x + 7, y + 3, 0, 2, 'O', TextScreenBuffer.WHITE);
-        drawLine(x + 12, y + 3, 0, 2, 'O', TextScreenBuffer.WHITE);
+        draw.line(x + 7, y + 3, 0, 2, 'O', TextColor.WHITE);
+        draw.line(x + 12, y + 3, 0, 2, 'O', TextColor.WHITE);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class Example implements Runnable {
         while (loop) {
             long time0 = System.currentTimeMillis();
 
-            buffer.clear('.', TextScreenBuffer.BLUE, TextScreenBuffer.BLUE);
+            buffer.clear('.', TextColor.BLUE, TextColor.BLUE);
 
             drawBg();
 
@@ -99,7 +101,9 @@ public class Example implements Runnable {
                 }
             }
 
-            buffer.write(x, y, ":)", hit ? TextScreenBuffer.RED : TextScreenBuffer.GREEN, (byte) -1);
+            draw.text(x, y, ":)", hit ? TextColor.RED : TextColor.GREEN, TextColor.YELLOW);
+
+            sprite.draw(x + 5, y, buffer);
 
             System.out.print(buffer.output());
 

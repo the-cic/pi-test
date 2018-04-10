@@ -11,15 +11,6 @@ package com.mush.textscreen;
  */
 public class TextScreenBuffer {
 
-    public static final byte BLACK = 0;
-    public static final byte RED = 1;
-    public static final byte GREEN = 2;
-    public static final byte YELLOW = 3;
-    public static final byte BLUE = 4;
-    public static final byte MAGENTA = 5;
-    public static final byte CYAN = 6;
-    public static final byte WHITE = 7;
-
     private final char ESC = '\033';
 
     // Active drawing maps
@@ -52,10 +43,10 @@ public class TextScreenBuffer {
         charactersBuffer = new char[length];
         fgColorsBuffer = new byte[length];
         bgColorsBuffer = new byte[length];
-        clear(' ', WHITE, BLACK);
+        clear(' ', TextColor.WHITE, TextColor.BLACK);
         fullFrameCountdown = dirtyFramesUntilFullFrame;
     }
-    
+
     public void setDirtyFramesUntilFullFrame(int v) {
         dirtyFramesUntilFullFrame = v;
     }
@@ -91,8 +82,8 @@ public class TextScreenBuffer {
     }
 
     private void outputWholeBuffer(StringBuilder sb) {
-        byte prevFg = -1;
-        byte prevBg = -1;
+        byte prevFg = TextColor.NO_COLOR;
+        byte prevBg = TextColor.NO_COLOR;
         for (int line = 0; line < height; line++) {
             outputPlaceCursor(0, line, sb);
             for (int x = 0; x < width; x++) {
@@ -102,7 +93,7 @@ public class TextScreenBuffer {
                 boolean fgChanged = fg != prevFg;
                 boolean bgChanged = bg != prevBg;
                 if (fgChanged || bgChanged) {
-                    outputColor(fgChanged ? fg : -1, bgChanged ? bg : -1, sb);
+                    outputColor(fgChanged ? fg : TextColor.NO_COLOR, bgChanged ? bg : TextColor.NO_COLOR, sb);
                 }
                 sb.append(this.characters[index]);
                 prevFg = fg;
@@ -115,8 +106,8 @@ public class TextScreenBuffer {
     }
 
     private void outputDirtyBuffer(StringBuilder sb) {
-        byte prevFg = -1;
-        byte prevBg = -1;
+        byte prevFg = TextColor.NO_COLOR;
+        byte prevBg = TextColor.NO_COLOR;
         int segments = 0;
         for (int line = 0; line < height; line++) {
             boolean wasDirty = false;
@@ -133,7 +124,7 @@ public class TextScreenBuffer {
                     boolean fgChanged = fg != prevFg;
                     boolean bgChanged = bg != prevBg;
                     if (fgChanged || bgChanged) {
-                        outputColor(fgChanged ? fg : -1, bgChanged ? bg : -1, sb);
+                        outputColor(fgChanged ? fg : TextColor.NO_COLOR, bgChanged ? bg : TextColor.NO_COLOR, sb);
                     }
                     sb.append(this.characters[index]);
                     prevFg = fg;
@@ -141,8 +132,8 @@ public class TextScreenBuffer {
                     wasDirty = true;
                 } else {
                     wasDirty = false;
-                    prevFg = -1;
-                    prevBg = -1;
+                    prevFg = TextColor.NO_COLOR;
+                    prevBg = TextColor.NO_COLOR;
                 }
             }
         }
@@ -163,9 +154,9 @@ public class TextScreenBuffer {
 
     private void outputColor(byte fg, byte bg, StringBuilder sb) {
         sb.append(ESC).append('[');
-        if (fg >= 0) {
+        if (fg > TextColor.NO_COLOR) {
             sb.append(fg + 30);
-            if (bg >= 0) {
+            if (bg > TextColor.NO_COLOR) {
                 sb.append(';');
             }
         }
@@ -177,19 +168,6 @@ public class TextScreenBuffer {
 
     private void outputPlaceCursor(int x, int y, StringBuilder sb) {
         sb.append(ESC).append('[').append(y + 1).append(';').append(x + 1).append('H');
-    }
-
-    public void write(int x, int y, String s, byte fg, byte bg) {
-        for (int i = 0; i < s.length(); i++) {
-            int u = x + i;
-            setCharacter(u, y, s.charAt(i));
-            if (fg >= 0) {
-                setFgColor(u, y, fg);
-            }
-            if (bg >= 0) {
-                setBgColor(u, y, bg);
-            }
-        }
     }
 
     public void setCharacter(int x, int y, char c) {
@@ -211,7 +189,9 @@ public class TextScreenBuffer {
     }
 
     private void setFgColor(int index, byte fg) {
-        fgColors[index] = fg;
+        if (fg > TextColor.NO_COLOR) {
+            fgColors[index] = fg;
+        }
     }
 
     public void setBgColor(int x, int y, byte bg) {
@@ -222,7 +202,9 @@ public class TextScreenBuffer {
     }
 
     public void setBgColor(int index, byte bg) {
-        bgColors[index] = bg;
+        if (bg > TextColor.NO_COLOR) {
+            bgColors[index] = bg;
+        }
     }
 
     private boolean isDirty(int index) {
