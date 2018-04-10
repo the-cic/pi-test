@@ -3,19 +3,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mush.pitest1;
+package com.mush.textscreen;
 
 /**
  *
- * @author cic
+ * @author Mirko Stancic, Dhimahi
  */
-public class Main implements Runnable {
+public class Example implements Runnable {
 
     TextScreenBuffer buffer;
     private double fi = 0;
     private double avgFps = 0;
 
-    public Main() {
+    public Example() {
         buffer = new TextScreenBuffer();
         buffer.init(160, 45);
 
@@ -35,24 +35,19 @@ public class Main implements Runnable {
         }
     }
 
-    public static void main(String[] args) {
-        Main main = new Main();
-        new Thread(main).start();
-    }
-
     private void drawBg() {
         drawSmiley(0, 0);
-        
+
         fi += 0.01;
         int dx = (int) (Math.cos(fi) * 10);
         int dy = (int) (Math.sin(fi) * 10);
         drawSmiley(40 + dx, 10 + dy);
-        
+
         drawSmiley(50, 30);
         drawSmiley(70, 5);
         drawSmiley(90, 20);
     }
-    
+
     private void drawSmiley(int x, int y) {
         drawLine(x + 6, y + 7, 8, 0, 'O', TextScreenBuffer.WHITE);
         drawLine(x + 4, y + 5, 2, 2, 'O', TextScreenBuffer.WHITE);
@@ -73,7 +68,7 @@ public class Main implements Runnable {
         int dx = 1;
         int dy = 1;
         int count = 0;
-        
+
         buffer.setDirtyFramesUntilFullFrame((int) (targetFps * 15));
         long lastTime = System.currentTimeMillis();
 
@@ -83,7 +78,7 @@ public class Main implements Runnable {
             buffer.clear('.', TextScreenBuffer.BLUE, TextScreenBuffer.BLUE);
 
             drawBg();
-            
+
             boolean hit = false;
 
             char c = buffer.getCharacter(x + dx, y + dy);
@@ -139,7 +134,7 @@ public class Main implements Runnable {
             } catch (InterruptedException ex) {
                 loop = false;
             }
-            
+
             count++;
         }
         System.out.println("\nFinished");
