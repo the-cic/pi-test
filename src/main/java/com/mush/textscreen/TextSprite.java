@@ -128,4 +128,20 @@ public class TextSprite {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        int count = 0;
+        for (char c : characters) {
+            sb.append(c);
+            count++;
+            if (count % width == 0) {
+                sb.append('\n');
+            }
+        }
+
+        return sb.toString();
+    }
+
 }

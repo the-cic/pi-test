@@ -5,8 +5,6 @@
  */
 package com.mush;
 
-import com.mush.textscreen.Example;
-
 /**
  *
  * @author cic

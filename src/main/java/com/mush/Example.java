@@ -3,7 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mush.textscreen;
+package com.mush;
+
+import com.mush.textscreen.ConfigSprites;
+import com.mush.textscreen.TextColor;
+import com.mush.textscreen.TextDraw;
+import com.mush.textscreen.TextScreenBuffer;
 
 /**
  *
@@ -13,7 +18,7 @@ public class Example implements Runnable {
 
     private TextScreenBuffer buffer;
     private TextDraw draw;
-    private TextSprite sprite;
+    ConfigSprites sprites;
     private double fi = 0;
     private double avgFps = 0;
 
@@ -23,33 +28,31 @@ public class Example implements Runnable {
 
         draw = new TextDraw(buffer);
 
-        sprite = new TextSprite(5, 5)
-                .setLine("+-.-+", "MMYMM", TextColor.YELLOW)
-                .setLine("|---|", "MGGGM")
-                .setLine(" :-) ", TextColor.GREEN)
-                .setLine("|---|", "mgggm")
-                .setLine("+- -+", "MMMMMM", "Y   Y");
-        sprite.setOffset(2, 2);
+        sprites = new ConfigSprites();
+        sprites.load("sprites.properties");
 
         System.out.print(buffer.outputClearScreen());
     }
 
     private void drawBg() {
-        drawSmiley(0, 0);
+        sprites.get("big-face").draw(0+4, 0+3, buffer);
 
         fi += 0.01;
         int dx = (int) (Math.cos(fi) * 10);
         int dy = (int) (Math.sin(fi) * 10);
-        drawSmiley(40 + dx, 10 + dy);
+        sprites.get("big-face").draw(40 + dx, 10 + dy, buffer);
 
-        drawSmiley(50, 30);
-        drawSmiley(70, 5);
-        drawSmiley(90, 20);
+        sprites.get("big-face").draw(50, 30, buffer);
+        sprites.get("big-face").draw(70, 5, buffer);
+        sprites.get("big-face").draw(90, 20, buffer);
 
-        sprite.draw(50, 10, buffer);
-        sprite.draw(90, 20, buffer);
+        sprites.get("face-box").draw(50, 10, buffer);
+        sprites.get("face-box").draw(90, 20, buffer);
+
+        sprites.get("color-box").draw(80, 0, buffer);
     }
 
+    /*
     private void drawSmiley(int x, int y) {
         draw.line(x + 6, y + 7, 8, 0, 'O', TextColor.WHITE);
         draw.line(x + 4, y + 5, 2, 2, 'O', TextColor.WHITE);
@@ -58,6 +61,7 @@ public class Example implements Runnable {
         draw.line(x + 7, y + 3, 0, 2, 'O', TextColor.WHITE);
         draw.line(x + 12, y + 3, 0, 2, 'O', TextColor.WHITE);
     }
+    */
 
     @Override
     public void run() {
@@ -103,7 +107,7 @@ public class Example implements Runnable {
 
             draw.text(x, y, ":)", hit ? TextColor.RED : TextColor.GREEN, TextColor.YELLOW);
 
-            sprite.draw(x + 5, y, buffer);
+            sprites.get("face-box").draw(x + 5, y, buffer);
 
             System.out.print(buffer.output());
 
