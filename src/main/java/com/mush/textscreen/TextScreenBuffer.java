@@ -59,6 +59,17 @@ public class TextScreenBuffer {
         }
     }
 
+    public void clear(int x, int y, int w, int h, char fillC, byte fgCol, byte bgCol) {
+        for (int v = 0; v < h; v++) {
+            for (int u = 0; u < w; u++) {
+                int i = (y + v) * width + x + u;
+                setCharacter(i, fillC);
+                setFgColor(i, fgCol);
+                setBgColor(i, bgCol);
+            }
+        }
+    }
+
     public String outputClearScreen() {
         return ESC + "[2J";
     }
