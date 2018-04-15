@@ -9,6 +9,7 @@ import com.mush.textscreen.ConfigSprites;
 import com.mush.textscreen.TextColor;
 import com.mush.textscreen.TextDraw;
 import com.mush.textscreen.TextScreenBuffer;
+import com.mush.textscreen.TextSprite;
 
 /**
  *
@@ -23,9 +24,25 @@ public class Example implements Runnable {
     private double avgFps = 0;
 
     public Example() {
-        buffer = new TextScreenBuffer();
-        buffer.init(160, 45);
+        int width = jline.TerminalFactory.get().getWidth() - 0;
+        int height = jline.TerminalFactory.get().getHeight() - 0;
 
+        width = Math.max(20, width);
+        height = Math.max(10, height);
+
+        width = Math.min(160, width);
+        height = Math.min(50, height);
+
+        buffer = new TextScreenBuffer();
+        
+        buffer.setShowStats(false);
+
+        if (buffer.getShowStats()) {
+            height -= 5; // status lines
+        }
+        
+        buffer.init(width, height);
+        
         draw = new TextDraw(buffer);
 
         sprites = new ConfigSprites();
@@ -35,56 +52,31 @@ public class Example implements Runnable {
     }
 
     private void drawBg() {
-        draw.line(0, 35, 40, 2, '~', TextColor.YELLOW);
-        draw.line(40, 37, 50, -3, '~', TextColor.YELLOW);
-        draw.line(90, 34, 10, 0, '~', TextColor.YELLOW);
-        draw.line(100, 34, 60, 4, '~', TextColor.YELLOW);
         
-        sprites.get("castle").draw(30, 30, buffer);
+        int groundY = (int)(0.66 * buffer.getHeight());
         
-//        buffer.clear(0, 35, 160, 10, '#', TextColor.GREEN, TextColor.YELLOW);
-//        sprites.get("big-face").draw(0 + 4, 0 + 3, buffer);
+        draw.line(0, groundY + 5, 40, 2, '~', TextColor.YELLOW);
+        draw.line(40, groundY +  7, 50, -3, '~', TextColor.YELLOW);
+        draw.line(90, groundY + 4, 10, 0, '~', TextColor.YELLOW);
+        draw.line(100, groundY + 4, buffer.getWidth() - 100, 4, '~', TextColor.YELLOW);
 
-//        fi += 0.05;
-//        int dx = (int) (Math.cos(fi) * 10);
-//        int dy = (int) (Math.sin(fi) * 10);
-//        sprites.get("big-face").draw(40 + dx, 10 + dy, buffer);
-//
-//        sprites.get("big-face").draw(50, 30, buffer);
-//        sprites.get("big-face").draw(70, 5, buffer);
-//        sprites.get("big-face").draw(90, 20, buffer);
+        TextSprite castle = sprites.get("castle");
+        castle.draw((int)(0.18 * buffer.getWidth()), groundY + 9 - castle.getHeight(), buffer);
 
-//        sprites.get("face-box").draw(50, 10, buffer);
-//        sprites.get("face-box").draw(90, 20, buffer);
-
-
-        sprites.get("color-box").draw(80, 0, buffer);
+        sprites.get("color-box").draw(buffer.getWidth() / 2, 0, buffer);
     }
-    
+
     private void drawFg() {
-        sprites.get("chest").draw(100, 38, buffer);
+        TextSprite chest = sprites.get("chest");
+        chest.draw((int)(0.625 * buffer.getWidth()), (int)(buffer.getHeight() * 38.0/45.0), buffer);
     }
-    
-    /*
-    private void drawSmiley(int x, int y) {
-        draw.line(x + 6, y + 7, 8, 0, 'O', TextColor.WHITE);
-        draw.line(x + 4, y + 5, 2, 2, 'O', TextColor.WHITE);
-        draw.line(x + 15, y + 5, -2, 2, 'O', TextColor.WHITE);
 
-        draw.line(x + 7, y + 3, 0, 2, 'O', TextColor.WHITE);
-        draw.line(x + 12, y + 3, 0, 2, 'O', TextColor.WHITE);
-    }
-     */
     @Override
     public void run() {
         boolean loop = true;
         long targetFps = 30;
         long targetMillisPerFrame = 1000 / targetFps;
 
-//        int x = 0;
-//        int y = 0;
-//        int dx = 1;
-//        int dy = 1;
         int count = 0;
 
         int fishCount = 20;
@@ -92,11 +84,13 @@ public class Example implements Runnable {
         for (int i = 0; i < fishCount; i++) {
             fishes[i] = new Fish();
         }
-        
+
         int bubbleCount = 30;
+        int bubbleX = (int)(0.625 * buffer.getWidth()) + 3;
+        int bubbleY = (int)(buffer.getHeight() * 38.0/45.0);
         Bubble[] bubbles = new Bubble[bubbleCount];
         for (int i = 0; i < bubbleCount; i++) {
-            bubbles[i] = new Bubble((int) (103 + Math.random() * 3), 38);
+            bubbles[i] = new Bubble((int) (bubbleX + Math.random() * 3), bubbleY);
         }
 
         buffer.setDirtyFramesUntilFullFrame((int) (targetFps * 15));
@@ -109,30 +103,6 @@ public class Example implements Runnable {
 
             drawBg();
 
-//            boolean hit = false;
-//            char c = buffer.getCharacter(x + dx, y + dy);
-//            if (c == '.') {
-//                x += dx;
-//                y += dy;
-//            } else {
-//                hit = true;
-//                char cx = buffer.getCharacter(x - dx, y + dy);
-//                char cy = buffer.getCharacter(x + dx, y - dy);
-//                if (cx == '.') {
-//                    dx = -dx;
-//                } else if (cy == '.') {
-//                    dy = -dy;
-//                } else {
-//                    dx = -dx;
-//                    dy = -dy;
-//                }
-//            }
-            // draw.text(x, y, ":)", hit ? TextColor.RED : TextColor.GREEN, TextColor.YELLOW);
-//            if (hit) { 
-//                sprites.get("fish-mid-hit").draw(x+2 , y, buffer);
-//            } else {
-//                sprites.get("fish-mid").draw(x+2, y, buffer);
-//            }
             for (Fish fish : fishes) {
                 fish.update();
                 String name = fish.dx == 0
@@ -140,13 +110,13 @@ public class Example implements Runnable {
                         : (fish.dx > 0
                                 ? "fish-mid-right"
                                 : "fish-mid-left");
-                
+
                 double inf = 1 - fish.f;
-                sprites.get(name).draw((int)(fish.x * fish.f + inf * 80), (int)(fish.y * fish.f + inf * 20), buffer);
+                sprites.get(name).draw((int) (fish.x * fish.f + inf * 80), (int) (fish.y * fish.f + inf * 20), buffer);
             }
-            
+
             drawFg();
-            
+
             for (Bubble bubble : bubbles) {
                 bubble.update();
                 buffer.setCharacter(bubble.x, bubble.y, bubble.c);
@@ -167,19 +137,19 @@ public class Example implements Runnable {
             if (wait < 0) {
                 wait = 0;
             }
-//            long fps = 1000 / (delay + wait);
+
             if (frameDelay == 0) {
                 frameDelay = 1;
             }
             long fps = 1000 / (frameDelay);
             avgFps = avgFps * 0.9 + fps * 0.1;
 
-            System.out.println("\nFps: " + Math.round(avgFps) + "      ");
-//            System.out.println("x: " + x + " y:" + y + "              ");
-//            System.out.println("dx: " + dx + " dy:" + dy + "      ");
-            System.out.println("Frame count: " + count + "      ");
-            System.out.println("Delay: " + delay + " ms      ");
-            System.out.println("Wait: " + wait + " ms      ");
+            if (buffer.getShowStats()) {
+                System.out.println("\nFps: " + Math.round(avgFps) + "      ");
+                System.out.println("Frame count: " + count + "      ");
+                System.out.println("Delay: " + delay + " ms      ");
+                System.out.print("Wait: " + wait + " ms      ");
+            }
 
             try {
                 Thread.sleep(wait);

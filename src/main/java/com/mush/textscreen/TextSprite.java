@@ -35,6 +35,14 @@ public class TextSprite {
         nextLine = 0;
     }
 
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
     public TextSprite setOffset(int x, int y) {
         this.xOfs = x;
         this.yOfs = y;

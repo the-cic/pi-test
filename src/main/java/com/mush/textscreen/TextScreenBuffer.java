@@ -28,6 +28,7 @@ public class TextScreenBuffer {
     private int length;
     private int fullFrameCountdown;
     private int dirtyFramesUntilFullFrame = 100;
+    private boolean showStats = false;
 
     public TextScreenBuffer() {
         init(5, 5);
@@ -45,6 +46,14 @@ public class TextScreenBuffer {
         bgColorsBuffer = new byte[length];
         clear(' ', TextColor.WHITE, TextColor.BLACK);
         fullFrameCountdown = dirtyFramesUntilFullFrame;
+    }
+
+    public void setShowStats(boolean v) {
+        showStats = v;
+    }
+    
+    public boolean getShowStats() {
+        return showStats;
     }
 
     public void setDirtyFramesUntilFullFrame(int v) {
@@ -112,8 +121,11 @@ public class TextScreenBuffer {
             }
         }
         outputResetColor(sb);
-        outputPlaceCursor(0, height, sb);
-        sb.append("\nFull frame              ");
+        if (showStats) {
+            outputPlaceCursor(0, height, sb);
+            sb.append("Full frame              ");
+        }
+        outputPlaceCursor(width, height, sb);
     }
 
     private void outputDirtyBuffer(StringBuilder sb) {
@@ -149,8 +161,11 @@ public class TextScreenBuffer {
             }
         }
         outputResetColor(sb);
-        outputPlaceCursor(0, height, sb);
-        sb.append("\nSegments: ").append(segments).append("      ");
+        if (showStats) {
+            outputPlaceCursor(0, height, sb);
+            sb.append("Segments: ").append(segments).append("      ");
+        }
+        outputPlaceCursor(width, height, sb);
     }
 
     private void copyToBuffers() {
