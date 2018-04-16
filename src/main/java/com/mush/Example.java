@@ -31,12 +31,11 @@ public class Example implements Runnable {
         width = Math.max(20, width);
         height = Math.max(10, height);
 
-        width = Math.min(160, width);
-        height = Math.min(50, height);
-
+//        width = Math.min(160, width);
+//        height = Math.min(50, height);
         buffer = new TextScreenBuffer();
 
-        buffer.setShowStats(true);
+        buffer.setShowStats(false);
 
         if (buffer.getShowStats()) {
             height -= 5; // status lines
@@ -48,6 +47,11 @@ public class Example implements Runnable {
 
         sprites = new ConfigSprites();
         sprites.load("sprites.properties");
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+        }
 
         System.out.print(buffer.outputClearScreen());
         System.out.print(buffer.outputHideCursor());
@@ -78,8 +82,7 @@ public class Example implements Runnable {
         weed.draw(x2 + 7, groundY - 3, buffer);
         weed.draw(x3 + 5, groundY - 4, buffer);
 
-        sprites.get("color-box").draw(buffer.getWidth() / 2, 0, buffer);
-
+//        sprites.get("color-box").draw(buffer.getWidth() / 2, 0, buffer);
         TextSprite castle = sprites.get("castle");
         castle.draw((int) (0.18 * buffer.getWidth()), groundY + 4 - castle.getHeight(), buffer);
     }

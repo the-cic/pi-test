@@ -36,7 +36,7 @@ public class Fish {
         maxY = buffer.getHeight() - minY;
 
         x = minX + Math.random() * (maxX - minX);
-        y = minY + Math.random() * (maxY - minY) * 0.5;
+        y = minY + Math.random() * (maxY - minY) * 0.65;
 
         vx = 1;
         changeSpeed();
