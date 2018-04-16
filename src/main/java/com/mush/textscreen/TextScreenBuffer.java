@@ -51,7 +51,7 @@ public class TextScreenBuffer {
     public void setShowStats(boolean v) {
         showStats = v;
     }
-    
+
     public boolean getShowStats() {
         return showStats;
     }
@@ -81,6 +81,14 @@ public class TextScreenBuffer {
 
     public String outputClearScreen() {
         return ESC + "[2J";
+    }
+
+    public String outputHideCursor() {
+        return ESC + "[?25l";
+    }
+
+    public String outputShowCursor() {
+        return ESC + "[?25h";
     }
 
     public String output() {

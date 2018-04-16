@@ -22,6 +22,7 @@ public class Example implements Runnable {
     ConfigSprites sprites;
     private double fi = 0;
     private double avgFps = 0;
+    boolean loop = false;
 
     public Example() {
         int width = jline.TerminalFactory.get().getWidth() - 0;
@@ -34,27 +35,34 @@ public class Example implements Runnable {
         height = Math.min(50, height);
 
         buffer = new TextScreenBuffer();
-        
+
         buffer.setShowStats(false);
 
         if (buffer.getShowStats()) {
             height -= 5; // status lines
         }
-        
+
         buffer.init(width, height);
-        
+
         draw = new TextDraw(buffer);
 
         sprites = new ConfigSprites();
         sprites.load("sprites.properties");
 
         System.out.print(buffer.outputClearScreen());
+        System.out.print(buffer.outputHideCursor());
+    }
+
+    public void onClose() {
+        loop = false;
+        System.out.print(buffer.outputShowCursor());
+        System.out.println("\nkthxbye!");
     }
 
     private void drawBg() {
-        
+
         int groundY = (int)(0.66 * buffer.getHeight());
-        
+
         draw.line(0, groundY + 5, 40, 2, '~', TextColor.YELLOW);
         draw.line(40, groundY +  7, 50, -3, '~', TextColor.YELLOW);
         draw.line(90, groundY + 4, 10, 0, '~', TextColor.YELLOW);
@@ -73,7 +81,7 @@ public class Example implements Runnable {
 
     @Override
     public void run() {
-        boolean loop = true;
+        loop = true;
         long targetFps = 30;
         long targetMillisPerFrame = 1000 / targetFps;
 
