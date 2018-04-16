@@ -49,6 +49,14 @@ public class TextSprite {
         return this;
     }
 
+    public int getXOffset() {
+        return this.xOfs;
+    }
+
+    public int getYOffset() {
+        return this.yOfs;
+    }
+
     private int getIndexFromNextLine() {
         int index = nextLine * width;
         nextLine++;

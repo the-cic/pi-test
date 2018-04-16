@@ -36,7 +36,7 @@ public class Example implements Runnable {
 
         buffer = new TextScreenBuffer();
 
-        buffer.setShowStats(false);
+        buffer.setShowStats(true);
 
         if (buffer.getShowStats()) {
             height -= 5; // status lines
@@ -56,27 +56,39 @@ public class Example implements Runnable {
     public void onClose() {
         loop = false;
         System.out.print(buffer.outputShowCursor());
-        System.out.println("\nkthxbye!");
+        System.out.println("\n");
+    }
+
+    private int getGroundY() {
+        return (int) (0.8 * buffer.getHeight());
     }
 
     private void drawBg() {
+        int groundY = getGroundY();
 
-        int groundY = (int)(0.66 * buffer.getHeight());
+        int x2 = (int) (buffer.getWidth() * 0.25);
+        int x3 = (int) (buffer.getWidth() * 0.75);
 
-        draw.line(0, groundY + 5, 40, 2, '~', TextColor.YELLOW);
-        draw.line(40, groundY +  7, 50, -3, '~', TextColor.YELLOW);
-        draw.line(90, groundY + 4, 10, 0, '~', TextColor.YELLOW);
-        draw.line(100, groundY + 4, buffer.getWidth() - 100, 4, '~', TextColor.YELLOW);
+        draw.line(0, groundY, x2, 2, '~', TextColor.YELLOW);
+        draw.line(x2, groundY + 2, x3 - x2, 0, '~', TextColor.YELLOW);
+        draw.line(x3, groundY + 2, buffer.getWidth() - x3, -2, '~', TextColor.YELLOW);
 
-        TextSprite castle = sprites.get("castle");
-        castle.draw((int)(0.18 * buffer.getWidth()), groundY + 9 - castle.getHeight(), buffer);
+        TextSprite weed = sprites.get("seaweed");
+        weed.draw(5, groundY - 5, buffer);
+        weed.draw(x2 + 7, groundY - 3, buffer);
+        weed.draw(x3 + 5, groundY - 4, buffer);
 
         sprites.get("color-box").draw(buffer.getWidth() / 2, 0, buffer);
+
+        TextSprite castle = sprites.get("castle");
+        castle.draw((int) (0.18 * buffer.getWidth()), groundY + 4 - castle.getHeight(), buffer);
     }
 
     private void drawFg() {
+        int groundY = getGroundY();
+
         TextSprite chest = sprites.get("chest");
-        chest.draw((int)(0.625 * buffer.getWidth()), (int)(buffer.getHeight() * 38.0/45.0), buffer);
+        chest.draw((int) (0.625 * buffer.getWidth()), groundY - 1, buffer);
     }
 
     @Override
@@ -90,12 +102,20 @@ public class Example implements Runnable {
         int fishCount = 20;
         Fish[] fishes = new Fish[fishCount];
         for (int i = 0; i < fishCount; i++) {
-            fishes[i] = new Fish();
+            if (i < 1) {
+                fishes[i] = new Fish(buffer, sprites.get("fish-huge-left"), sprites.get("fish-huge-front"), sprites.get("fish-huge-right"));
+            } else if (i < 3) {
+                fishes[i] = new Fish(buffer, sprites.get("fish-big-left"), sprites.get("fish-big-front"), sprites.get("fish-big-right"));
+            } else if (i < 10) {
+                fishes[i] = new Fish(buffer, sprites.get("fish-small-left"), sprites.get("fish-small-front"), sprites.get("fish-small-right"));
+            } else {
+                fishes[i] = new Fish(buffer, sprites.get("fish-mid-left"), sprites.get("fish-mid-front"), sprites.get("fish-mid-right"));
+            }
         }
 
-        int bubbleCount = 30;
-        int bubbleX = (int)(0.625 * buffer.getWidth()) + 3;
-        int bubbleY = (int)(buffer.getHeight() * 38.0/45.0);
+        int bubbleCount = 20;
+        int bubbleX = (int) (0.625 * buffer.getWidth()) + 3;
+        int bubbleY = getGroundY() - 1;
         Bubble[] bubbles = new Bubble[bubbleCount];
         for (int i = 0; i < bubbleCount; i++) {
             bubbles[i] = new Bubble((int) (bubbleX + Math.random() * 3), bubbleY);
@@ -107,20 +127,16 @@ public class Example implements Runnable {
         while (loop) {
             long time0 = System.currentTimeMillis();
 
+            for (Fish fish : fishes) {
+                fish.update();
+            }
+
             buffer.clear('.', TextColor.BLUE, TextColor.BLACK);
 
             drawBg();
 
             for (Fish fish : fishes) {
-                fish.update();
-                String name = fish.dx == 0
-                        ? "fish-mid-front"
-                        : (fish.dx > 0
-                                ? "fish-mid-right"
-                                : "fish-mid-left");
-
-                double inf = 1 - fish.f;
-                sprites.get(name).draw((int) (fish.x * fish.f + inf * 80), (int) (fish.y * fish.f + inf * 20), buffer);
+                fish.getSprite().draw((int) fish.x, (int) fish.y, buffer);
             }
 
             drawFg();
